@@ -18,6 +18,8 @@ on their Marathon descriptor, and they need to accept all slave types:
         "slave_public", "*"
     ],
 
+Unfortunately even the above skips Mesos master nodes, so if something needs to
+be collected from them it needs a manual installation.
 
 Basic usage from command line, adapt to your scheduler practices:
 
