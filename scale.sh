@@ -14,4 +14,42 @@ if [ -z "$mesos" ] || [ -z "$marathon" ] || [ -z "$services" ]; then
     exit 1
 fi
 
+url="$mesos/metrics/snapshot"
+
 echo "Querying Mesos for slave count"
+echo "GET $url"
+slaves=$(curl -s "$url" | jq -Mcr '.["master/slaves_active"]')
+
+if [ -z "$slaves" ] ; then 
+    echo "ERROR: Could not query Mesos slave count, exiting."
+    exit 1
+fi
+
+echo "There are $slaves slaves active."
+echo "Iterating the following services and scaling each (if necessary): $services"
+
+payload="{ \"instances\": $slaves }"
+
+for i in ${services//,/ }
+do
+    appUrl="$marathon/v2/apps/$i"
+    # echo "GET $appUrl"
+    current=$(curl -s "$appUrl" | jq '.app.instances')
+    if [ "$current" == null ]; then
+        echo "WARNING: $i: Service does not exist, ignoring."
+    else
+        if [ "$current" -eq "$slaves" ]; then
+            echo "$i: Instance count is already $current, ignoring."
+        else 
+            echo "$i: Scaling service to $slaves instances - this might fail if there is an ongoing deployment."
+            # echo "PUT $appUrl 
+            # echo "$payload"
+            deploymentId=$(curl -s "$appUrl" -H 'Content-Type: application/json' -X PUT -d "$payload" | jq '.deploymentId')
+            if [ "$deploymentId" == null ]; then 
+                echo "WARNING: $i: Scale operation failed."
+            else 
+                echo "$i: Done, the service is currently scaling."
+            fi
+        fi
+    fi
+done

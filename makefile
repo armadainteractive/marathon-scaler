@@ -18,7 +18,8 @@ PUBLISH_VERSION := $(VER_LEFT)$(VER_RIGHT)
 default: run
 
 run: 
-	@echo "TODO: run"
+	chmod +x ./scale.sh
+	./scale.sh http://localhost:8999/mesos http://localhost:8999/service/marathon logspout,bar
 
 docker:
 	docker build -t $(NAME):latest .
@@ -26,7 +27,7 @@ docker:
 # Build and run the container. This is mainly for local development time
 # container testing. 
 docker.run: docker
-	docker run $(NAME):latest
+	docker run $(NAME):latest http://localhost:8999/mesos http://localhost:8999/service/marathon logspout,bar
 
 # Build the container, tag it with version information, and publish it to the Docker registry.
 publish: docker
