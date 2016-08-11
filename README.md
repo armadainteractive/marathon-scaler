@@ -25,3 +25,19 @@ Basic usage from command line, adapt to your scheduler practices:
 
     docker run marathon-scaler http://mesos.leader:5050 http://marathon.mesos:8080 service1,service2,service3
 
+With Chronos the setup is e.g.:
+
+    {
+        "schedule": "R/2016-01-01T10:13:00Z/PT10M",
+        "name": "scale-per-node-services",
+        "owner": "monitor@armadainteractive.com",
+        "container": {
+            "type": "DOCKER",
+            "image": "951625648013.dkr.ecr.us-east-1.amazonaws.com/marathon-scaler:1.0.3"
+        },
+        "cpus": "0.1",
+        "mem": "80",
+        "uris": [ ],
+        "command": "./scale.sh http://leader.mesos:5050 http://marathon.mesos:8080 logspout"
+    }
+
