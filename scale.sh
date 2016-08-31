@@ -14,11 +14,20 @@ if [ -z "$mesos" ] || [ -z "$marathon" ] || [ -z "$services" ]; then
     exit 1
 fi
 
+# If jq exists locally, use that. Otherwise try to use it from path.
+if [ -f "jq" ]; then
+    echo "Using local copy of jq"
+    JQ="./jq" 
+else 
+    echo "Using JQ from path"
+    JQ="jq"
+fi 
+
 url="$mesos/metrics/snapshot"
 
 echo "Querying Mesos for slave count"
 echo "GET $url"
-slaves=$(curl -s "$url" | jq -Mcr '.["master/slaves_active"]')
+slaves=$(curl -s "$url" | $JQ -Mcr '.["master/slaves_active"]')
 
 if [ -z "$slaves" ] ; then 
     echo "ERROR: Could not query Mesos slave count, exiting."
@@ -34,7 +43,7 @@ for i in ${services//,/ }
 do
     appUrl="$marathon/v2/apps/$i"
     # echo "GET $appUrl"
-    current=$(curl -s "$appUrl" | jq '.app.instances')
+    current=$(curl -s "$appUrl" | $JQ '.app.instances')
     if [ "$current" == null ]; then
         echo "WARNING: $i: Service does not exist, ignoring."
     else
